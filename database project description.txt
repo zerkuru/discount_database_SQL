@@ -1,0 +1,59 @@
+ discount_system database description 
+
+1. The database discount_system is used for:
+   - storing information on clients, sales, products, storges (shops),
+     increasing and reducing of bonus points for the participants of bonus program, discounts, discount campaignes, 
+   - calculation of current bonus point balance
+   - discount calculation of permanent and temporary discount programs
+   - current sales history of the client
+   - bonus points history of the client
+   - sales analysis 
+
+   The current base is not a storage or accounting system, cannot be used for accurate accounting balance or storage balance information, might be used as a data storage of discount programs for separate storages and applications (mobile shop application) 
+   Autonomous database for discount and sales information allows to complete discount calculation independently from different accounting, sales or storage systems through the chain, including foreing systems and consolidate client information and sales information from the systems.  
+
+
+
+2. Database tables list:
+- clients
+- sales 
+- shops 
+- cities 
+- products 
+- catalogs 
+- product_types
+- sales_products 
+- bonuses 
+- action_types
+- actions
+- discount_categories 
+- bonus_docs 
+- bonus_balance 
+- current_discount 
+- address
+
+
+3. Data uniqueness control
+- incomming data: products, sales (and returns), clients information 
+- uniqueness control of exchange with the foregn systems is providede by external_id (UUID), we don't generate an inner UUID as there is no data generated inside the base for these tables  
+- outcoming data always includes external_id for clients, products, sales, etc. 
+- primary and external keys inside the base: SERIAL
+
+4. project files
+
+database dump discount_system.sql
+database structure sql_create_discount_system.sql
+database filling example ds_filling.sql
+requests examples select_ds.txt
+views examples ds_views.sql
+triggers and functions examples ds_triggers_functions.sql
+
+diagramm ERD_discount_system.pgn
+
+
+
+
+
+
+
+

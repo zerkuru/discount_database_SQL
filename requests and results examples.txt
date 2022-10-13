@@ -1,0 +1,139 @@
+типичные выборки, образцы:
+
+- общее
+
+mysql> SELECT * FROM bonuses LIMIT 2;
++----+-----------+----------+--------+----------+---------------------+
+| id | client_id | sales_id | doc_id | quantity | created_at          |
++----+-----------+----------+--------+----------+---------------------+
+|  1 |         1 |        1 |      1 |        0 | 2004-10-28 14:42:51 |
+|  2 |         2 |        2 |      2 |        0 | 1972-03-26 08:26:02 |
++----+-----------+----------+--------+----------+---------------------+
+2 rows in set (0.00 sec)
+
+mysql> SELECT * FROM actions LIMIT 2;
++----+----------------+---------+-----------------+------------+-----------------+---------------------+
+| id | action_type_id | shop_id | product_type_id | catalog_id | dicount_percent | created_at          |
++----+----------------+---------+-----------------+------------+-----------------+---------------------+
+|  1 |              1 |       1 |               1 |          1 |               4 | 1980-10-29 23:22:59 |
+|  2 |              2 |       2 |               2 |          2 |               1 | 1984-03-01 21:26:56 |
++----+----------------+---------+-----------------+------------+-----------------+---------------------+
+2 rows in set (0.00 sec)
+
+mysql> SELECT * FROM sales LIMIT 2;
++----+--------------------------------------+-----------+-----------+----------+------------+--------------+---------+-------------+-------------+---------------------+---------+
+| id | external_id                          | client_id | sale_type | discount | total_sum  | discount_sum | sum     | payed_bonus | added_bonus | sale_date           | shop_id |
++----+--------------------------------------+-----------+-----------+----------+------------+--------------+---------+-------------+-------------+---------------------+---------+
+|  1 | afabad8d-bb96-11eb-98fb-283926e47295 |         1 | sale      |       10 | 1037031.55 |  16247982.00 | 4925.41 |         149 |         237 | 1994-02-11 19:55:20 |       1 |
+|  2 | afacd291-bb96-11eb-98fb-283926e47295 |         2 | sale      |       20 |  686853.81 |      3780.00 | 4637.50 |         808 |         225 | 1988-06-28 02:19:06 |       2 |
++----+--------------------------------------+-----------+-----------+----------+------------+--------------+---------+-------------+-------------+---------------------+---------+
+2 rows in set (0.00 sec)
+
+
+
+- группировки
+
+mysql> SELECT COUNT(*), sale_type  FROM sales GROUP BY sale_type;
++----------+-----------+
+| COUNT(*) | sale_type |
++----------+-----------+
+|      413 | sale      |
+|      387 | return    |
++----------+-----------+
+2 rows in set (0.01 sec)
+
+
+
+- группировки, JOIN, вложенные таблицы\запросы
+
+
+- клиент, его возраст, его город, его текущая скидка, общее количество покупок, общая сумма покупок
+
+SELECT 
+CONCAT(cl.name, ' ', SUBSTRING(cl.second_name, 1, 1), '. ', cl.surname) as name,
+cl.external_id AS id,
+(YEAR(CURRENT_DATE)-YEAR(cl.birthday))-(RIGHT(CURRENT_DATE,5)< RIGHT(cl.birthday,5)) as age,
+addr.city as city,
+cd.discount as discount,
+sl_count.sales as total_sales,
+sl_count.sum as sum
+FROM clients cl
+LEFT JOIN 
+(SELECT  
+address.client_id AS client_id,
+MAX(cities.name)AS city 
+FROM address LEFT JOIN cities ON address.city_id = cities.id GROUP BY client_id) AS addr ON cl.id = addr.client_id
+LEFT JOIN 
+(SELECT 
+sl.client_id AS client_id,
+COUNT(DISTINCT sl.id) AS sales,
+SUM(sl.sum) AS sum
+FROM sales sl
+GROUP BY sl.client_id) AS sl_count ON cl.id = sl_count.client_id
+LEFT JOIN 
+(SELECT
+current_discount.client_id AS client_id,
+MAX(current_discount.discount) AS discount
+FROM current_discount
+GROUP BY client_id) AS cd ON cl.id = cd.client_id
+LIMIT 20;
+
+mysql> SELECT 
+    -> CONCAT(cl.name, ' ', SUBSTRING(cl.second_name, 1, 1), '. ', cl.surname) as name,
+    -> cl.external_id AS id,
+    -> (YEAR(CURRENT_DATE)-YEAR(cl.birthday))-(RIGHT(CURRENT_DATE,5)< RIGHT(cl.birthday,5)) as age,
+    -> addr.city as city,
+    -> cd.discount as discount,
+    -> sl_count.sales as total_sales,
+    -> sl_count.sum as sum
+    -> FROM clients cl
+    -> LEFT JOIN 
+    -> (SELECT  
+    -> address.client_id AS client_id,
+    -> MAX(cities.name)AS city 
+    -> FROM address LEFT JOIN cities ON address.city_id = cities.id GROUP BY client_id) AS addr ON cl.id = addr.client_id
+    -> LEFT JOIN 
+    -> (SELECT 
+    -> sl.client_id AS client_id,
+    -> COUNT(DISTINCT sl.id) AS sales,
+    -> SUM(sl.sum) AS sum
+    -> FROM sales sl
+    -> GROUP BY sl.client_id) AS sl_count ON cl.id = sl_count.client_id
+    -> LEFT JOIN 
+    -> (SELECT
+    -> current_discount.client_id AS client_id,
+    -> MAX(current_discount.discount) AS discount
+    -> FROM current_discount
+    -> GROUP BY client_id) AS cd ON cl.id = cd.client_id
+    -> LIMIT 20;
++------------------------+--------------------------------------+------+--------------------+----------+-------------+--------------+
+| name                   | id                                   | age  | city               | discount | total_sales | sum          |
++------------------------+--------------------------------------+------+--------------------+----------+-------------+--------------+
+| Cary A. Kuphal         | 97d04dcb-bb96-11eb-98fb-283926e47295 |   26 | Lake Emile         |        1 |           2 |      4925.41 |
+| Ismael G. Schaefer     | 97d12cdd-bb96-11eb-98fb-283926e47295 |    9 | Cleveport          |        9 |           2 |    244624.26 |
+| George M. Cruickshank  | 97d22dc9-bb96-11eb-98fb-283926e47295 |   36 | New Cory           |       11 |           2 |        12.15 |
+| Barney V. Metz         | 97d31de0-bb96-11eb-98fb-283926e47295 |   17 | Beattytown         |        5 |           2 |    786484.85 |
+| Raphael H. Casper      | 97d3fb2a-bb96-11eb-98fb-283926e47295 |   28 | West Myriam        |        2 |           2 | 604650034.96 |
+| Alena K. Flatley       | 97d520ec-bb96-11eb-98fb-283926e47295 |   51 | Lake Alizaside     |       20 |           2 |      3894.15 |
+| Nickolas B. Raynor     | 97d5db51-bb96-11eb-98fb-283926e47295 |   44 | Lake Marlee        |       12 |           2 | 565935853.00 |
+| Gregorio T. Bednar     | 97d6cabc-bb96-11eb-98fb-283926e47295 |    3 | South Glenniemouth |       15 |           2 |  10977506.89 |
+| Johanna I. Stoltenberg | 97d7984c-bb96-11eb-98fb-283926e47295 |   42 | Gottliebstad       |       13 |           2 |     66347.98 |
+| Melyna R. D'Amore      | 97d84df7-bb96-11eb-98fb-283926e47295 |   37 | Zenaport           |        6 |           2 |    254945.29 |
+| Muriel C. Ullrich      | 97d938b0-bb96-11eb-98fb-283926e47295 |   12 | Cronafort          |        4 |           2 | 541090201.70 |
+| Augustus B. Wolff      | 97da3299-bb96-11eb-98fb-283926e47295 |   37 | Lake Claudie       |       17 |           2 |   8283835.17 |
+| Cleo L. Pfannerstill   | 97db3b20-bb96-11eb-98fb-283926e47295 |    5 | West Agnes         |       13 |           2 |   1202929.28 |
+| Pat L. Grant           | 97dbf5e3-bb96-11eb-98fb-283926e47295 |    1 | Oliverborough      |       12 |           2 |     24608.57 |
+| Wilmer G. Armstrong    | 97dcd4c9-bb96-11eb-98fb-283926e47295 |   38 | New Jaceport       |       11 |           2 |   6691422.28 |
+| Sibyl A. Kassulke      | 97ddd3eb-bb96-11eb-98fb-283926e47295 |   47 | Turnerville        |        1 |           2 | 157115077.03 |
+| Sienna W. Robel        | 97dea8ea-bb96-11eb-98fb-283926e47295 |   37 | Delaneyside        |       10 |           2 |       671.23 |
+| Ilene H. Considine     | 97dfbb36-bb96-11eb-98fb-283926e47295 |   28 | West Elliott       |       14 |           2 | 196719121.04 |
+| Trenton M. Baumbach    | 97e09070-bb96-11eb-98fb-283926e47295 |   33 | Ernestfurt         |        8 |           2 |  20708879.60 |
+| Darrel A. Mann         | 97e14112-bb96-11eb-98fb-283926e47295 |   23 | Creminmouth        |        5 |           2 |   4506221.20 |
++------------------------+--------------------------------------+------+--------------------+----------+-------------+--------------+
+20 rows in set (0.01 sec)
+
+mysql> 
+
+
+
+
